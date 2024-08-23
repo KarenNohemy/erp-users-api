@@ -7,7 +7,7 @@ export class UsersService {
 
   private usersListBD : User[] = [
     {
-      id:'1',
+      id:1,
       username:'Karen2023',
       email:'karen@gmail.com',
       password:'karenPassword',
@@ -16,7 +16,7 @@ export class UsersService {
       created_at: new Date().getTime()
     },
     {
-      id:'2',
+      id:2,
       username:'Edilzon2010',
       email:'edilzon@gmail.com',
       password:'edilzonPassword',
@@ -25,7 +25,7 @@ export class UsersService {
       created_at: new Date().getTime()
     },
     {
-      id:'3',
+      id:3,
       username:'Fabricio2020',
       email:'fabricio@gmail.com',
       password:'fabricioPassword',
