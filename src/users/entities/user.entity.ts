@@ -1,14 +1,14 @@
 
 export class User {
 
-    id:string;
+    id:number;
     username:string;
     email:string;
     password:string;
     first_name:string;
     last_name:string;
-    created_at:number;
-    update_at?:string;
+    created_at:string;
+    updated_at?:string;
 
 
 }
