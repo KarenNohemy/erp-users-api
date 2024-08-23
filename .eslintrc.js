@@ -22,4 +22,11 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
   },
+    //Regla para indicar que estamos trabajando en windows
+    "prettier/prettier": [
+      "error", 
+      {
+        "endOfLine": "auto"
+      }
+    ]
 };
