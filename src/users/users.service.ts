@@ -46,7 +46,6 @@ export class UsersService {
       first_name: createUserDto.first_name,
       last_name: createUserDto.last_name,
       created_at: new Date().toISOString(),
-      updated_at: createUserDto.updated_at ?? new Date().toISOString(),
     }
 
     //Validar error al hacer insert en bd 
@@ -68,11 +67,60 @@ export class UsersService {
     return userFound;
   }
 
+  updateElement(id: number, updateUserDto: CreateUserDto) {
+    let userBD: User;
+
+    //Validar si el id es numerico
+    console.log("ID: " + id)
+    if(isNaN(id))throw new  BadRequestException(`El formato para el id no es correcto`);
+  
+    try {
+      // Intentar encontrar el usuario
+      userBD = this.findOne(id);
+    } catch (error) {
+      // Si no se encuentra el usuario, se captura la excepción aquí
+      // y se procede a crear uno nuevo
+      userBD = undefined;
+    }
+  
+    if (userBD) {
+      // Si el usuario fue encontrado, se actualiza
+      userBD = {
+        ...userBD,
+        ...updateUserDto,
+        updated_at: new Date().toISOString()
+      };
+  
+      this.usersListBD = this.usersListBD.map(user => 
+        user.id === id ? userBD : user
+      );
+  
+      return `El usuario ${userBD.first_name} ha sido actualizado`;
+    } else {
+      // Si el usuario no fue encontrado, se crea uno nuevo
+      const userUpdated: User = {
+        id: updateUserDto.id,
+        username: updateUserDto.username,
+        email: updateUserDto.email,
+        password: updateUserDto.password,
+        first_name: updateUserDto.first_name,
+        last_name: updateUserDto.last_name,
+        created_at: new Date().toISOString()
+        };
+      this.usersListBD.push(userUpdated);
+  
+      return `El usuario ${userUpdated.first_name} ha sido creado`;
+    }
+  }
   
 
   update(id: number, updateUserDto: UpdateUserDto) {
 
+    //Validar si el id es numerico
+
+
     let userBD = this.findOne(id)
+
    
     this.usersListBD = this.usersListBD.map(user => {
       if(user.id === id){
@@ -90,7 +138,15 @@ export class UsersService {
     return `El usuario  ${userBD.first_name} ha sido actualizado`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  remove(id: string) {
+    let userForDelete = this.usersListBD = this.usersListBD.filter( user =>  user.id !== +id); 
+
+    if (userForDelete) {
+    return `El usuario con id ${id} ha sido eliminado`;
+    }else{
+      return `No se encontró un vehículo con id ${id}.`;
+    }
   }
+
+  //Función 
 }

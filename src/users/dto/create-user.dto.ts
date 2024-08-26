@@ -1,13 +1,12 @@
-import {IsEmail, IsNotEmpty, IsString, MaxLength, MinLength} from 'class-validator'
+import {IsEmail, IsNotEmpty, isNumber, IsString, MaxLength, MinLength} from 'class-validator'
 
 //Validar que el id sea llave primario
 //Validar que el username y email sean únicos
 
 
 export class CreateUserDto {
-    @MinLength(1)
-    @IsNotEmpty()
-    readonly id:number;
+
+     id?:number;
 
     @IsString()
     @IsNotEmpty()
@@ -37,12 +36,9 @@ export class CreateUserDto {
     @MaxLength(50)
     last_name:string;
 
-    @IsNotEmpty()
-    @IsString()
+    //@IsString()
     readonly created_at:string;
-
-    @IsNotEmpty()
-    @IsString()
+    //@IsString()
     updated_at?:string;
 
 }
