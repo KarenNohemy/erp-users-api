@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import {UserEntity} from './entities/user.entity'
-import { IsNumber } from 'class-validator';
+import { last } from 'rxjs';
 
 
 @Injectable()
@@ -18,17 +18,6 @@ export class UsersService {
     private readonly userRepository: Repository<UserEntity>
   ){}
 
-  private usersListBD : UserEntity[] = [
-    {
-      id:1,
-      username:'Karen2023',
-      email:'karen@gmail.com',
-      password:'karenPassword',
-      first_name:'Karen',
-      last_name:'López',
-      created_at: new Date().toISOString()
-    }
-  ]
 
   async create(createUserDto: CreateUserDto) {
 
@@ -90,6 +79,8 @@ export class UsersService {
   }
 
   updateElement(id: number, updateUserDto: CreateUserDto) {
+
+    /** 
     let userBD: UserEntity;
 
     //Validar si el id es numerico
@@ -133,12 +124,27 @@ export class UsersService {
   
       return `El usuario ${userUpdated.first_name} ha sido creado`;
     }
+
+    */
   }
   
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    //preload: buscar un usuario por id y carga todas las propiedades del dto
+    const userUpdated = await this.userRepository.preload({
+      id:id, 
+      ...updateUserDto
+    }); 
 
-    //Validar si el id es numerico
+    if(!userUpdated)  throw new NotFoundException(`El usuario con el id ${id} no fué encontrado`)
+
+    await this.userRepository.save(userUpdated); 
+
+    delete userUpdated.password; 
+
+    return userUpdated; 
+
+    
 
 
     //let userBD = this.findOne(id)
