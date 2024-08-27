@@ -19,9 +19,16 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id',ParseIntPipe) id: string) {
-    return this.usersService.findOne(+id);
+  //Buscar por id 
+  @Get(':term')
+  findOne(@Param('term', ParseIntPipe) term: string) {
+    return this.usersService.findOne(term, "id");
+  }
+
+  //Buscar por email 
+  @Get('email/:term')
+  findOneByEmail(@Param('term') term: string) {
+    return this.usersService.findOne(term, "email");
   }
 
   @Put(':id')

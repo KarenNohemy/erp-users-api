@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import {UserEntity} from './entities/user.entity'
-import { isNull } from 'util';
+import { IsNumber } from 'class-validator';
 
 
 @Injectable()
@@ -15,7 +15,7 @@ export class UsersService {
 
   constructor (
     @InjectRepository(UserEntity)
-    private readonly userRespository: Repository<UserEntity>
+    private readonly userRepository: Repository<UserEntity>
   ){}
 
   private usersListBD : UserEntity[] = [
@@ -33,8 +33,8 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
 
     try {
-      const user = this.userRespository.create(createUserDto); 
-      await this.userRespository.save(user); 
+      const user = this.userRepository.create(createUserDto); 
+      await this.userRepository.save(user); 
       return user;
 
     } catch (error) {
@@ -49,8 +49,8 @@ export class UsersService {
 
   async findAll() {
     try {
-      const allUsers = this.userRespository.find(); 
-      await this.userRespository.find(); 
+      const allUsers = this.userRepository.find(); 
+      await this.userRepository.find(); 
       return allUsers;
 
     } catch (error) {
@@ -60,13 +60,23 @@ export class UsersService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(term: string, lookfor:string) {
 
     try {
-      const userFound = await this.userRespository.findOneBy( { id } );  
-      //await this.userRespository.findOne({ where: { id } }); 
+
+      let userFound: UserEntity;
+      const id = parseInt(term, 10);
+
+      if (lookfor = 'id') {
+        userFound = await this.userRepository.findOne({ where: { id } });
+      } else {
+        userFound = await this.userRepository.findOne({ where: { email: term } });
+      }
+
+      //const userFound = await this.userRespository.findOneBy( {term});  
+
       if(!userFound)
-        throw new NotFoundException(`No se encontró el usuario con el id ${id}`);
+        throw new NotFoundException(`No se encontró el usuario con el ${lookfor} :  ${term}`);
 
       return userFound;
 
@@ -76,8 +86,6 @@ export class UsersService {
       this.handleDBExceptions(error); 
 
     }
-
-    
 
   }
 
@@ -133,7 +141,7 @@ export class UsersService {
     //Validar si el id es numerico
 
 
-    let userBD = this.findOne(id)
+    //let userBD = this.findOne(id)
 
    /** 
     this.usersListBD = this.usersListBD.map(user => {
@@ -157,8 +165,8 @@ export class UsersService {
   async remove(id: string) {
 
     try {
-      const userFound = await this.findOne(+id); 
-      await this.userRespository.remove(userFound);
+      const userFound = await this.findOne(id, "id"); 
+      await this.userRepository.remove(userFound);
       return `El usuario ${id} ha sido eliminado`
 
     } catch (error) {
