@@ -12,6 +12,8 @@ async function bootstrap() {
     forbidNonWhitelisted: true, 
     }) 
    );
+
+   app.setGlobalPrefix('/erp/api/v1/')
   await app.listen(3000);
 }
 bootstrap();

@@ -6,8 +6,6 @@ import {IsEmail, IsNotEmpty, isNumber, IsString, MaxLength, MinLength} from 'cla
 
 export class CreateUserDto {
 
-     id?:number;
-
     @IsString()
     @IsNotEmpty()
     @MinLength(3)

@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import {User} from './entities/user.entity'
+import {UserEntity} from './entities/user.entity'
 
 @Injectable()
 export class UsersService {
 
-  private usersListBD : User[] = [
+  private usersListBD : UserEntity[] = [
     {
       id:1,
       username:'Karen2023',
@@ -38,8 +38,8 @@ export class UsersService {
 
   create(createUserDto: CreateUserDto) {
 
-    const user: User = {
-      id: createUserDto.id,
+    const user: CreateUserDto = {
+
       username:createUserDto.username,
       email: createUserDto.email,
       password: createUserDto.password,
@@ -49,7 +49,7 @@ export class UsersService {
     }
 
     //Validar error al hacer insert en bd 
-    this.usersListBD.push(user); 
+    //this.usersListBD.push(user); 
 
     return user;
   }
@@ -68,7 +68,7 @@ export class UsersService {
   }
 
   updateElement(id: number, updateUserDto: CreateUserDto) {
-    let userBD: User;
+    let userBD: UserEntity;
 
     //Validar si el id es numerico
     console.log("ID: " + id)
@@ -98,8 +98,7 @@ export class UsersService {
       return `El usuario ${userBD.first_name} ha sido actualizado`;
     } else {
       // Si el usuario no fue encontrado, se crea uno nuevo
-      const userUpdated: User = {
-        id: updateUserDto.id,
+      const userUpdated: CreateUserDto = {
         username: updateUserDto.username,
         email: updateUserDto.email,
         password: updateUserDto.password,
@@ -107,7 +106,8 @@ export class UsersService {
         last_name: updateUserDto.last_name,
         created_at: new Date().toISOString()
         };
-      this.usersListBD.push(userUpdated);
+     
+     //   this.usersListBD.push(userUpdated);
   
       return `El usuario ${userUpdated.first_name} ha sido creado`;
     }
