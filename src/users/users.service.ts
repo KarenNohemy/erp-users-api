@@ -1,10 +1,22 @@
-import { BadRequestException, Injectable, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import {UserEntity} from './entities/user.entity'
+import { isNull } from 'util';
+
 
 @Injectable()
 export class UsersService {
+
+  private readonly logger = new Logger('UsersService'); 
+
+  constructor (
+    @InjectRepository(UserEntity)
+    private readonly userRespository: Repository<UserEntity>
+  ){}
 
   private usersListBD : UserEntity[] = [
     {
@@ -15,56 +27,58 @@ export class UsersService {
       first_name:'Karen',
       last_name:'López',
       created_at: new Date().toISOString()
-    },
-    {
-      id:2,
-      username:'Edilzon2010',
-      email:'edilzon@gmail.com',
-      password:'edilzonPassword',
-      first_name:'Edilzon',
-      last_name:'López',
-      created_at: new Date().toISOString()
-    },
-    {
-      id:3,
-      username:'Fabricio2020',
-      email:'fabricio@gmail.com',
-      password:'fabricioPassword',
-      first_name:'Fabricio',
-      last_name:'López',
-      created_at: new Date().toISOString()
-    },
+    }
   ]
 
-  create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
 
-    const user: CreateUserDto = {
+    try {
+      const user = this.userRespository.create(createUserDto); 
+      await this.userRespository.save(user); 
+      return user;
 
-      username:createUserDto.username,
-      email: createUserDto.email,
-      password: createUserDto.password,
-      first_name: createUserDto.first_name,
-      last_name: createUserDto.last_name,
-      created_at: new Date().toISOString(),
+    } catch (error) {
+      
+      this.handleDBExceptions(error); 
+
     }
 
-    //Validar error al hacer insert en bd 
-    //this.usersListBD.push(user); 
-
-    return user;
   }
 
-  findAll() {
-    return this.usersListBD;
+
+
+  async findAll() {
+    try {
+      const allUsers = this.userRespository.find(); 
+      await this.userRespository.find(); 
+      return allUsers;
+
+    } catch (error) {
+      
+      this.handleDBExceptions(error); 
+
+    }
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
 
-    const userFound = this.usersListBD.find(usuario => usuario.id === id); 
+    try {
+      const userFound = await this.userRespository.findOneBy( { id } );  
+      //await this.userRespository.findOne({ where: { id } }); 
+      if(!userFound)
+        throw new NotFoundException(`No se encontró el usuario con el id ${id}`);
+
+      return userFound;
+
+    } catch (error) {
+
+      console.log(error)
+      this.handleDBExceptions(error); 
+
+    }
+
     
-    if(!userFound) throw new NotFoundException(`No se encontró el usuario con el id: ${id}`);
 
-    return userFound;
   }
 
   updateElement(id: number, updateUserDto: CreateUserDto) {
@@ -76,7 +90,7 @@ export class UsersService {
   
     try {
       // Intentar encontrar el usuario
-      userBD = this.findOne(id);
+     // userBD = this.findOne(id);
     } catch (error) {
       // Si no se encuentra el usuario, se captura la excepción aquí
       // y se procede a crear uno nuevo
@@ -121,7 +135,7 @@ export class UsersService {
 
     let userBD = this.findOne(id)
 
-   
+   /** 
     this.usersListBD = this.usersListBD.map(user => {
       if(user.id === id){
         userBD.updated_at = new Date().toISOString(),
@@ -136,17 +150,34 @@ export class UsersService {
 
 
     return `El usuario  ${userBD.first_name} ha sido actualizado`;
+
+    */
   }
 
-  remove(id: string) {
-    let userForDelete = this.usersListBD = this.usersListBD.filter( user =>  user.id !== +id); 
+  async remove(id: string) {
 
-    if (userForDelete) {
-    return `El usuario con id ${id} ha sido eliminado`;
-    }else{
-      return `No se encontró un vehículo con id ${id}.`;
+    try {
+      const userFound = await this.findOne(+id); 
+      await this.userRespository.remove(userFound);
+      return `El usuario ${id} ha sido eliminado`
+
+    } catch (error) {
+      
+      this.handleDBExceptions(error); 
+
     }
   }
 
-  //Función 
+  //Manejo de errores de BD
+  private handleDBExceptions (error: any){
+    if (error.code === '23505')
+      throw new BadRequestException(error.detail)
+
+    if(error instanceof NotFoundException)
+      throw error
+
+
+    this.logger.error(error); 
+    throw new InternalServerErrorException('Internal server error, revisar logs del servidor')
+  }
 }
