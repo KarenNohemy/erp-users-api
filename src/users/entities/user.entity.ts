@@ -28,4 +28,7 @@ export class UserEntity {
     @Column('text', {default: () => 'CURRENT_TIMESTAMP'})
     updated_at?:string;
 
+    //@Column('text')
+    //state:string;
+
 }
