@@ -32,9 +32,10 @@ export class UsersController {
   }
 
   @Put(':id')
-  updateElement (@Param('id', ParseIntPipe) id: string, @Body() updateUserDto: CreateUserDto): string {
-   // return this.usersService.updateElement(+id, updateUserDto);
-   return ''
+  updateElement (@Param('id', ParseIntPipe) id: string, @Body() updateUserDto: CreateUserDto) {
+
+    return this.usersService.updateAll(+id, updateUserDto);
+
   }
 
   @Patch(':id')

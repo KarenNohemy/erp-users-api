@@ -2,33 +2,41 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
-import {UserEntity} from './entities/user.entity'
-import { last } from 'rxjs';
+import { UserEntity } from './entities/user.entity'
+import { randomInt } from 'crypto'; // Importa la función randomInt de Node.js para generar números aleatorios
 
 
 @Injectable()
 export class UsersService {
 
-  private readonly logger = new Logger('UsersService'); 
+  private readonly logger = new Logger('UsersService');
 
-  constructor (
+  constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>
-  ){}
+  ) { }
 
 
   async create(createUserDto: CreateUserDto) {
 
     try {
-      const user = this.userRepository.create(createUserDto); 
-      await this.userRepository.save(user); 
+
+      //Verificamos si no envian password para generar una
+      if (!createUserDto.password || createUserDto.password.trim() === '') {
+        createUserDto.password =  this.generateRandomPassword(createUserDto.first_name);
+      }
+      //Creamos el objeto del usuario con los datos necesario
+      const user = this.userRepository.create(createUserDto);
+
+      //Guardamos en BD
+      await this.userRepository.save(user);
       return user;
 
     } catch (error) {
-      
-      this.handleDBExceptions(error); 
+
+      this.handleDBExceptions(error);
 
     }
 
@@ -38,18 +46,18 @@ export class UsersService {
 
   async findAll() {
     try {
-      const allUsers = this.userRepository.find(); 
-      await this.userRepository.find(); 
+      const allUsers = this.userRepository.find();
+      await this.userRepository.find();
       return allUsers;
 
     } catch (error) {
-      
-      this.handleDBExceptions(error); 
+
+      this.handleDBExceptions(error);
 
     }
   }
 
-  async findOne(term: string, lookfor:string) {
+  async findOne(term: string, lookfor: string) {
 
     try {
 
@@ -64,7 +72,7 @@ export class UsersService {
 
       //const userFound = await this.userRespository.findOneBy( {term});  
 
-      if(!userFound)
+      if (!userFound)
         throw new NotFoundException(`No se encontró el usuario con el ${lookfor} :  ${term}`);
 
       return userFound;
@@ -72,126 +80,88 @@ export class UsersService {
     } catch (error) {
 
       console.log(error)
-      this.handleDBExceptions(error); 
+      this.handleDBExceptions(error);
 
     }
 
   }
 
-  updateElement(id: number, updateUserDto: CreateUserDto) {
-
-    /** 
-    let userBD: UserEntity;
-
-    //Validar si el id es numerico
-    console.log("ID: " + id)
-    if(isNaN(id))throw new  BadRequestException(`El formato para el id no es correcto`);
-  
+  async updateAll(id: number, updateUserDto: CreateUserDto) {
     try {
-      // Intentar encontrar el usuario
-     // userBD = this.findOne(id);
-    } catch (error) {
-      // Si no se encuentra el usuario, se captura la excepción aquí
-      // y se procede a crear uno nuevo
-      userBD = undefined;
-    }
-  
-    if (userBD) {
-      // Si el usuario fue encontrado, se actualiza
-      userBD = {
-        ...userBD,
-        ...updateUserDto,
-        updated_at: new Date().toISOString()
-      };
-  
-      this.usersListBD = this.usersListBD.map(user => 
-        user.id === id ? userBD : user
-      );
-  
-      return `El usuario ${userBD.first_name} ha sido actualizado`;
-    } else {
-      // Si el usuario no fue encontrado, se crea uno nuevo
-      const userUpdated: CreateUserDto = {
-        username: updateUserDto.username,
-        email: updateUserDto.email,
-        password: updateUserDto.password,
-        first_name: updateUserDto.first_name,
-        last_name: updateUserDto.last_name,
-        created_at: new Date().toISOString()
-        };
-     
-     //   this.usersListBD.push(userUpdated);
-  
-      return `El usuario ${userUpdated.first_name} ha sido creado`;
-    }
+      // Buscar un usuario por id y cargar todas las propiedades del DTO
+      const userUpdated = await this.userRepository.preload({
+        id: id,
+        ...updateUserDto
+      });
 
-    */
+      if (!userUpdated) {
+         // Crear el usuario
+        // En este método no se envia la contraseña, se debe validar en create
+
+        const createdUser = await this.create(updateUserDto);
+        return createdUser;
+      } else {
+        // Si se encuentra, se actualiza
+        await this.userRepository.save(userUpdated);
+
+        // Eliminar el campo de la contraseña de la respuesta
+        delete userUpdated.password;
+        return userUpdated;
+      }
+
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
-  
+
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     //preload: buscar un usuario por id y carga todas las propiedades del dto
     const userUpdated = await this.userRepository.preload({
-      id:id, 
+      id: id,
       ...updateUserDto
-    }); 
+    });
 
-    if(!userUpdated)  throw new NotFoundException(`El usuario con el id ${id} no fué encontrado`)
+    if (!userUpdated) throw new NotFoundException(`El usuario con el id ${id} no fué encontrado`)
 
-    await this.userRepository.save(userUpdated); 
+    await this.userRepository.save(userUpdated);
 
-    delete userUpdated.password; 
+    delete userUpdated.password;
 
-    return userUpdated; 
+    return userUpdated;
 
-    
-
-
-    //let userBD = this.findOne(id)
-
-   /** 
-    this.usersListBD = this.usersListBD.map(user => {
-      if(user.id === id){
-        userBD.updated_at = new Date().toISOString(),
-        userBD = {
-          ...userBD,
-          ...updateUserDto}
-          return userBD;
-        }
-
-        return user; 
-      }); 
-
-
-    return `El usuario  ${userBD.first_name} ha sido actualizado`;
-
-    */
   }
 
   async remove(id: string) {
 
     try {
-      const userFound = await this.findOne(id, "id"); 
+      const userFound = await this.findOne(id, "id");
       await this.userRepository.remove(userFound);
       return `El usuario ${id} ha sido eliminado`
 
     } catch (error) {
-      
-      this.handleDBExceptions(error); 
+
+      this.handleDBExceptions(error);
 
     }
   }
 
   //Manejo de errores de BD
-  private handleDBExceptions (error: any){
+  private handleDBExceptions(error: any) {
     if (error.code === '23505')
       throw new BadRequestException(error.detail)
 
-    if(error instanceof NotFoundException)
+    if (error instanceof NotFoundException)
       throw error
 
 
-    this.logger.error(error); 
+    this.logger.error(error);
     throw new InternalServerErrorException('Internal server error, revisar logs del servidor')
   }
+
+    // Método para generar una contraseña que combine first_name y 5 números aleatorios
+    private generateRandomPassword(name: string): string {
+      const randomNumbers = Array.from({ length: 5 }, () => randomInt(0, 10)).join(''); // Genera 5 números aleatorios
+      return `${name}${randomNumbers}`; // Combina first_name con los números aleatorios
+    }
 }
