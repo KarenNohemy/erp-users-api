@@ -27,19 +27,21 @@ export class AuthService {
     });
 
     this.validateUser(user, user.password, password)
-    //TODO:
+   
     //Cambiar state a Activo 
-    //await this.loginRepository.update({ username }, { state: 'Activo' });
+    await this.loginRepository.update({ username }, { state: 'Activo' });
 
     delete user.password;
 
     return user;
   }
 
-  async logoutUser(authUserDto: LoginUserDto) {
+  async logoutUser(logoutUserDto: LoginUserDto) {
+
+    const { username } = logoutUserDto;
 
     //Cambiar state a Inactivo 
-    //await this.loginRepository.update({ username }, { state: 'Inactivo' });
+    await this.loginRepository.update({ username }, { state: 'Inactivo' });
 
     return `Cerró sesion exitosamente`;
   }
@@ -56,6 +58,9 @@ export class AuthService {
 
     this.validateUser(user, user.password, password)
 
+    if (user.password === password)
+      throw new UnauthorizedException('La contraseña es igual a la anterior. ¡Intenta con otra!');
+
     //Cambiar password por newPassword - filtro where por username
     await this.loginRepository.update({ username }, { password: newPassword });
 
@@ -64,13 +69,16 @@ export class AuthService {
 
   validateUser(user, passwordBD: string, passwordBody: string) {
 
-    if (!user) {
+    if (!user) 
       throw new UnauthorizedException('Usuario incorrecto. ¡Intenta nuevamente!');
-    }
+    
 
-    if (passwordBD != passwordBody) {
+    if (passwordBD != passwordBody) 
       throw new UnauthorizedException('Contraseña incorrecta. ¡Intenta nuevamente!');
-    }
+
+
+
+    
   }
 
 }
