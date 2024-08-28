@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import {  Repository } from 'typeorm';
 
 import { UserEntity } from './entities/user.entity'
 import { randomInt } from 'crypto'; // Importa la función randomInt de Node.js para generar números aleatorios
