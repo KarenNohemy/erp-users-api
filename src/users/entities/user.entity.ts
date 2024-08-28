@@ -28,7 +28,7 @@ export class UserEntity {
     @Column('text', {default: () => 'CURRENT_TIMESTAMP'})
     updated_at?:string;
 
-    @Column('text',{ nullable: true} )
+    @Column('text',{ nullable: false} )
     state:string;
 
 }
