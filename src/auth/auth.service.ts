@@ -28,8 +28,8 @@ export class AuthService {
 
     this.validateUser(user, user.password, password)
    
-    //Cambiar state a Activo 
-    await this.loginRepository.update({ username }, { state: 'Activo' });
+    //Cambiar state a Conectado 
+    await this.loginRepository.update({ username }, { state: process.env.STATE_USER_ON });
 
     delete user.password;
 
@@ -40,10 +40,10 @@ export class AuthService {
 
     const { username } = logoutUserDto;
 
-    //Cambiar state a Inactivo 
-    await this.loginRepository.update({ username }, { state: 'Inactivo' });
+    //Cambiar state a Desconectado 
+    await this.loginRepository.update({ username }, { state: process.env.STATE_USER_OF });
 
-    return `Cerró sesion exitosamente`;
+    return process.env.MSG_LOGOUT;
   }
 
   async changePassword(changePasswordDto: UpdateAuthDto) {
@@ -59,22 +59,22 @@ export class AuthService {
     this.validateUser(user, user.password, password)
 
     if (user.password === password)
-      throw new UnauthorizedException('La contraseña es igual a la anterior. ¡Intenta con otra!');
+      throw new UnauthorizedException(process.env.MSG_ERROR_PASSWORD);
 
     //Cambiar password por newPassword - filtro where por username
     await this.loginRepository.update({ username }, { password: newPassword });
 
-    return `Se actualizo la contraseña exitosamente`;
+    return process.env.MSG_UPDATE_PASSWORD;
   }
 
   validateUser(user, passwordBD: string, passwordBody: string) {
 
     if (!user) 
-      throw new UnauthorizedException('Usuario incorrecto. ¡Intenta nuevamente!');
+      throw new UnauthorizedException(process.env.MSG_ERROR_USER);
     
 
     if (passwordBD != passwordBody) 
-      throw new UnauthorizedException('Contraseña incorrecta. ¡Intenta nuevamente!');
+      throw new UnauthorizedException(process.env.MSG_ERROR_PASSWORD);
 
 
 

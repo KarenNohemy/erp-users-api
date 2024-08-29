@@ -38,5 +38,7 @@ export class CreateUserDto {
     //@IsString()
     updated_at?: string;
 
+    state:string;
+
 
 }

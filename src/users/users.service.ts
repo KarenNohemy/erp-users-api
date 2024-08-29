@@ -28,6 +28,7 @@ export class UsersService {
         createUserDto.password =  this.generateRandomPassword(createUserDto.first_name);
       }
       //Creamos el objeto del usuario con los datos necesario
+      createUserDto.state = process.env.STATE_USER_CREATE;
       const user = this.userRepository.create(createUserDto);
 
       //Guardamos en BD
@@ -47,7 +48,11 @@ export class UsersService {
   async findAll() {
     try {
       const allUsers = this.userRepository.find();
+
+      (await allUsers).forEach(user => delete user.password);
+
       await this.userRepository.find();
+
       return allUsers;
 
     } catch (error) {
@@ -73,8 +78,12 @@ export class UsersService {
       //const userFound = await this.userRespository.findOneBy( {term});  
 
       if (!userFound)
-        throw new NotFoundException(`No se encontró el usuario con el ${lookfor} :  ${term}`);
+        throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
+      .replace('lookfor', lookfor)
+      .replace('term', term))
 
+      delete userFound.password 
+      
       return userFound;
 
     } catch (error) {
@@ -122,7 +131,9 @@ export class UsersService {
       ...updateUserDto
     });
 
-    if (!userUpdated) throw new NotFoundException(`El usuario con el id ${id} no fué encontrado`)
+    if (!userUpdated) throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
+      .replace('lookfor', 'id')
+      .replace('term', id.toString()))
 
     await this.userRepository.save(userUpdated);
 
@@ -137,7 +148,7 @@ export class UsersService {
     try {
       const userFound = await this.findOne(id, "id");
       await this.userRepository.remove(userFound);
-      return `El usuario ${id} ha sido eliminado`
+      return process.env.MSG_DELET_USER.replace('id', id)
 
     } catch (error) {
 
@@ -156,7 +167,7 @@ export class UsersService {
 
 
     this.logger.error(error);
-    throw new InternalServerErrorException('Internal server error, revisar logs del servidor')
+    throw new InternalServerErrorException(process.env.MSG_ERROR_INTERNAL_SERVER)
   }
 
     // Método para generar una contraseña que combine first_name y 5 números aleatorios
