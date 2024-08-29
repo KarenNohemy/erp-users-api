@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import {  Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { UserEntity } from './entities/user.entity'
 import { randomInt } from 'crypto'; // Importa la función randomInt de Node.js para generar números aleatorios
@@ -25,7 +25,7 @@ export class UsersService {
 
       //Verificamos si no envian password para generar una
       if (!createUserDto.password || createUserDto.password.trim() === '') {
-        createUserDto.password =  this.generateRandomPassword(createUserDto.first_name);
+        createUserDto.password = this.generateRandomPassword(createUserDto.first_name);
       }
       //Creamos el objeto del usuario con los datos necesario
       createUserDto.state = process.env.STATE_USER_CREATE;
@@ -79,11 +79,11 @@ export class UsersService {
 
       if (!userFound)
         throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
-      .replace('lookfor', lookfor)
-      .replace('term', term))
+          .replace('lookfor', lookfor)
+          .replace('term', term))
 
-      delete userFound.password 
-      
+      delete userFound.password
+
       return userFound;
 
     } catch (error) {
@@ -104,17 +104,18 @@ export class UsersService {
       });
 
       if (!userUpdated) {
-         // Crear el usuario
+        // Crear el usuario
         // En este método no se envia la contraseña, se debe validar en create
 
         const createdUser = await this.create(updateUserDto);
         return createdUser;
       } else {
+        delete userUpdated.password;
         // Si se encuentra, se actualiza
         await this.userRepository.save(userUpdated);
 
         // Eliminar el campo de la contraseña de la respuesta
-        delete userUpdated.password;
+
         return userUpdated;
       }
 
@@ -125,21 +126,27 @@ export class UsersService {
 
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    //preload: buscar un usuario por id y carga todas las propiedades del dto
-    const userUpdated = await this.userRepository.preload({
-      id: id,
-      ...updateUserDto
-    });
 
-    if (!userUpdated) throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
-      .replace('lookfor', 'id')
-      .replace('term', id.toString()))
+    try {
+      //preload: buscar un usuario por id y carga todas las propiedades del dto
+      const userUpdated = await this.userRepository.preload({
+        id: id,
+        ...updateUserDto
+      });
 
-    await this.userRepository.save(userUpdated);
+      if (!userUpdated) throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
+        .replace('lookfor', 'id')
+        .replace('term', id.toString()))
 
-    delete userUpdated.password;
+      await this.userRepository.save(userUpdated);
 
-    return userUpdated;
+      delete userUpdated.password;
+
+      return userUpdated;
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+
 
   }
 
@@ -162,6 +169,8 @@ export class UsersService {
     if (error.code === '23505')
       throw new BadRequestException(error.detail)
 
+    if (error instanceof BadRequestException) throw error
+
     if (error instanceof NotFoundException)
       throw error
 
@@ -170,9 +179,9 @@ export class UsersService {
     throw new InternalServerErrorException(process.env.MSG_ERROR_INTERNAL_SERVER)
   }
 
-    // Método para generar una contraseña que combine first_name y 5 números aleatorios
-    private generateRandomPassword(name: string): string {
-      const randomNumbers = Array.from({ length: 5 }, () => randomInt(0, 10)).join(''); // Genera 5 números aleatorios
-      return `${name}${randomNumbers}`; // Combina first_name con los números aleatorios
-    }
+  // Método para generar una contraseña que combine first_name y 5 números aleatorios
+  private generateRandomPassword(name: string): string {
+    const randomNumbers = Array.from({ length: 5 }, () => randomInt(0, 10)).join(''); // Genera 5 números aleatorios
+    return `${name}${randomNumbers}`; // Combina first_name con los números aleatorios
+  }
 }

@@ -9,6 +9,12 @@ export class UpdateAuthDto extends PartialType(LoginUserDto) {
     @IsNotEmpty()
     @MinLength(8)
     @MaxLength(100)
-    newPassword?: string;
+    new_password?: string;
+
+    // @IsString()
+    // @IsNotEmpty()
+    // @MinLength(8)
+    // @MaxLength(100)
+    // old_password?: string;
 
 }
