@@ -67,15 +67,15 @@ export class UsersService {
     try {
 
       let userFound: UserEntity;
-      const id = parseInt(term, 10);
 
-      if (lookfor = 'id') {
+      if (lookfor === 'id') {
+        const id = parseInt(term, 10);
+
         userFound = await this.userRepository.findOne({ where: { id } });
       } else {
         userFound = await this.userRepository.findOne({ where: { email: term } });
-      }
 
-      //const userFound = await this.userRespository.findOneBy( {term});  
+      }
 
       if (!userFound)
         throw new NotFoundException(process.env.MSG_ERROR_USER_NOT_FOUND
@@ -87,6 +87,7 @@ export class UsersService {
       return userFound;
 
     } catch (error) {
+
 
       console.log(error)
       this.handleDBExceptions(error);
@@ -171,8 +172,11 @@ export class UsersService {
 
     if (error instanceof BadRequestException) throw error
 
-    if (error instanceof NotFoundException)
+    if (error instanceof NotFoundException){
+      console.log('email not found')
       throw error
+    }
+
 
 
     this.logger.error(error);

@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ schema: 'dev', name: 'users' })
 export class UserEntity {
@@ -25,10 +25,22 @@ export class UserEntity {
     created_at:string;
 
 
-    @Column('text', {default: () => 'CURRENT_TIMESTAMP'})
+    @Column('text')
     updated_at?:string;
 
     @Column('text',{ nullable: false} )
     state:string;
+
+    @BeforeInsert()
+    setDates() {
+      this.created_at = new Date().toISOString();
+      this.updated_at = new Date().toISOString(); // Establece el formato ISO 8601
+    }
+
+
+    @BeforeUpdate()
+    setUpdatedAt() {
+      this.updated_at = new Date().toISOString(); // Establece el formato ISO 8601
+    }
 
 }
